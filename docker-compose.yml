@@ -21,7 +21,7 @@ services:
       - /dev/ttyUSB0:/dev/ttyUSB0
       - /dev/ttyUSB1:/dev/ttyUSB1
     volumes:
-      - ../hass-config:/config
+      - ../<config dir>:/config
       - /etc/localtime:/etc/localtime:ro
     ports:
       - 8123:8123
@@ -34,7 +34,7 @@ services:
     volumes:
       - next_mariadb:/var/lib/mysql
     env_file:
-      - ../env/next.env
+      - env/next.env
     
   nextcloud:
     container_name: nextcloud
@@ -43,7 +43,7 @@ services:
     volumes:
       - nextcloud:/var/www/html
     env_file:
-      - ../env/next.env
+      - env/next.env
     depends_on:
       - next_mariadb
     ports:
@@ -54,10 +54,10 @@ services:
     restart: unless-stopped
     image: mprasil/bitwarden:latest
     volumes:
-      - ../../bw-data/:/data/
-      - ../ssl/:/ssl/
+      - ../<data dir>:/data/
+      - ../<ssl dir>:/ssl/
     env_file:
-      - ../env/bitwarden.env
+      - env/bitwarden.env
     ports:
       - 1000:80
       
@@ -66,10 +66,10 @@ services:
     restart: unless-stopped
     image: plexinc/pms-docker
     env_file:
-      - ../env/plex.env
+      - env/plex.env
     volumes:
-      - ../../plex:/config
-      - ../media:/data
+      - ../<config dir>:/config
+      - ../<media dir>:/data
       - /etc/localtime:/etc/localtime:ro
     network_mode: host
 
@@ -78,7 +78,7 @@ services:
     restart: unless-stopped
     image: mariadb:10.3
     env_file:
-      - ../env/firefly.env
+      - env/firefly.env
     networks: 
       - firefly_net
     volumes: 
@@ -89,7 +89,7 @@ services:
     restart: unless-stopped
     image: jc5x/firefly-iii
     env_file:
-      - ../env/firefly.env
+      - env/firefly.env
     links:
       - firefly_db
     volumes:
