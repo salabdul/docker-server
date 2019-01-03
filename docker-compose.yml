@@ -1,0 +1,101 @@
+version: '3.7'
+
+volumes:
+  next_mariadb:
+  nextcloud:
+  firefly_db:
+  firefly_export:
+  firefly_upload:
+  
+networks: 
+  firefly_net: 
+    driver: bridge
+
+services:
+
+  homeassistant:
+    container_name: homeassistant
+    restart: unless-stopped
+    image: homeassistant/home-assistant:latest
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyUSB1:/dev/ttyUSB1
+    volumes:
+      - ../hass-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - 8123:8123
+
+  next_mariadb:
+    container_name: next_mariadb
+    restart: unless-stopped
+    image: mariadb:10.3
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - next_mariadb:/var/lib/mysql
+    env_file:
+      - ../env/next.env
+    
+  nextcloud:
+    container_name: nextcloud
+    restart: unless-stopped
+    image: nextcloud:apache
+    volumes:
+      - nextcloud:/var/www/html
+    env_file:
+      - ../env/next.env
+    depends_on:
+      - next_mariadb
+    ports:
+      - 2100:80
+
+  bitwarden:
+    container_name: bitwarden
+    restart: unless-stopped
+    image: mprasil/bitwarden:latest
+    volumes:
+      - ../../bw-data/:/data/
+      - ../ssl/:/ssl/
+    env_file:
+      - ../env/bitwarden.env
+    ports:
+      - 1000:80
+      
+  plex:
+    container_name: plex
+    restart: unless-stopped
+    image: plexinc/pms-docker
+    env_file:
+      - ../env/plex.env
+    volumes:
+      - ../../plex:/config
+      - ../media:/data
+      - /etc/localtime:/etc/localtime:ro
+    network_mode: host
+
+  firefly_db: 
+    container_name: firefly_db  
+    restart: unless-stopped
+    image: mariadb:10.3
+    env_file:
+      - ../env/firefly.env
+    networks: 
+      - firefly_net
+    volumes: 
+      - firefly_db:/var/lib/postgresql/data
+
+  firefly:
+    container_name: firefly
+    restart: unless-stopped
+    image: jc5x/firefly-iii
+    env_file:
+      - ../env/firefly.env
+    links:
+      - firefly_db
+    volumes:
+      - firefly_export:/var/www/firefly-iii/storage/export
+      - firefly_upload:/var/www/firefly-iii/storage/upload 
+    networks: 
+      - firefly_net 
+    ports:
+      - 5000:80
